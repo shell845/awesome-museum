@@ -1,5 +1,5 @@
 ## Project summary
-The purpose of this project is to collect and present information about museums (US only at current stage, may extend to global in next pharse), including museum categories, locations, ratings and more. 
+This project collects and presents information about museums (US only at current stage, may extend to global in next pharse), including museum categories, locations, ratings and more. 
 
 ## Source data
 Datasets are collected from Kaggle and Tripadvisor and are uploaded to AWS S3 `s3://udacity-dend-shell845/museum-data/`
@@ -38,12 +38,12 @@ Datasets are collected from Kaggle and Tripadvisor and are uploaded to AWS S3 `s
 #### museum_fact
 | Field Name | Data Type | Description                          | Example                      |
 |------------|-----------|--------------------------------------|------------------------------|
-| fact_id    | bigserial | primary key, unique id of the museum fact | 2904                    |
+| fact_id    | bigserial | primary key, id of the museum fact   | 2904                         |
 | museum_id  | integer   | museum id                            | 38                           |
-| city_id    | text      | museum location (city)               | Montreal                     |
-| category_id| text      | what kind of museum it is            | Arts                         |
+| city_id    | integer   | city id of museum location           | 72                           |
+| category_id| integer   | id of museum category                | 2                            |
 | rating     | numeric   | average rating given by visitors     | 4.7                          |
-| traveler_type_id| text | what visitor visit the museum        | Couples                      |
+| traveler_type_id|integer| id of visitor type                  | 3                            |
 | weather    | numeric   | average temperature of the city      | 17.4                         |
 
 
