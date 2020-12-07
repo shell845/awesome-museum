@@ -1,6 +1,8 @@
 ## Project summary
 This project collects and presents information about museums (US only at current stage, may extend to global in next pharse), including museum categories, locations, ratings and more. 
 
+## Project structure
+
 ## Source data
 Datasets are collected from Kaggle and Tripadvisor and are uploaded to AWS S3 `s3://udacity-dend-shell845/museum-data/`
 
@@ -32,7 +34,7 @@ Datasets are collected from Kaggle and Tripadvisor and are uploaded to AWS S3 `s
 2. `staging_rating` load data from **rating**
 3. `staging_traveler` load data from **traveler**
 4. `staging_weather` load data from **weather**
-3. `staging_museum` load data from **museum**
+5. `staging_museum` load data from **museum**
 
 ### Fact table
 #### museum_fact
@@ -88,6 +90,15 @@ Datasets are collected from Kaggle and Tripadvisor and are uploaded to AWS S3 `s
 ![DB-diagram](DB-diagram.png)
 
 ## ETL pipeline
+The ETL pipeline includes following steps:
+
+1. Load raw data for **museum** and **weather** from S3 to Spark, since these 2 datasets are too big to be processed directly in Redshift.
+2. Process **museum** and **weather** raw data with Spark, output transformed data to S3 as parquet files.
+3. Load processed dataset **museum** and **weather** as well as small raw datasets **category**, **rating** and **traveler** from S3 to Redshift staging tables.
+4. Conduct data quality check to ensure data are loaded succesfully to Redshift.
+5. Transform staging tables to fact and dimension tables in Redshift.
+6. Perform data quality check to ensure data transformation is correct.
+7. Analyze data.
 
 ## Data quality check
 
