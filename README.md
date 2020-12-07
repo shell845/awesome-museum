@@ -26,27 +26,52 @@ Datasets are collected from Kaggle and Tripadvisor and are uploaded to AWS S3 `s
 ### Staging table
 1. `staging_category` load data from **category**
 	
+	sample structure:
+	
 	`{'museum': ['museum type 1','museum type 2', …]}`
+	
+	sample data:
+	
 	`{"Gettysburg Heritage Center": ["History Museums", "Museums"]}`
 
 2. `staging_rating` load data from **rating**
 
+    sample structure:
+    
 	`{'museum': ['Excellent','Very good','Average','Poor','Terrible']}`
+	
+	sample data:
+	
 	`{"Gettysburg Heritage Center": ["164", "63", "10", "5", "4"]}`
 
 3. `staging_traveler` load data from **traveler**
 
+	sample structure:
+	
 	`{'museum': ['Families','Couples','Solo','Business','Friends']}`
+	
+	sample data:
+	
 	`{"Gettysburg Heritage Center": ["88", "86", "17", "2", "33"]`
 
 4. `staging_weather` load data from **weather**
 	
+	header:
+	
 	`dt,AverageTemperature,AverageTemperatureUncertainty,City,Country,Latitude,Longitude`
+	
+	sample data:
+	
 	`2008-01-01,10.915999999999999,0.165,Pasadena,United States,29.74N,96.00W`
 
 5. `staging_museum` load data from **museum**
 	
+	header:
+	
 	`Address, Description, FeatureCount, Fee, Langtitude, Latitude, LengthOfVisit, MuseumName, PhoneNum, Rank, Rating, ReviewCount,TotalThingsToDo`
+	
+	sample data:
+	
 	`"945 Magazine Street, New Orleans, LA 70130-3813","Founded by historian and author, Stephen Ambrose, the Museum tells the story of the American Experience in the war that changed the world - why it was fought, how it was won, and what it means today - so that all generations will understand the price of freedom and be inspired by what they learn. ",11,NA,-90.07008599999999,29.9430044,NA,The National WWII Museum,+1 504-528-1944,1,5.0,"15,611",319`
 
 ### Fact table
