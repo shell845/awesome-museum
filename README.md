@@ -16,13 +16,6 @@ Datasets are collected from Kaggle and Tripadvisor and are uploaded to AWS S3 `s
 
 	`{'museum': ['Excellent','Very good','Average','Poor','Terrible']}`
 
-	We maps the ratings to score during data transformation:
-	- Excellent: 5
-	- Very good: 4
-	- Average: 3
-	- Poor: 2
-	- Terrible: 1
-	- No rating: 0
 
 4. **traveler** how the travers travel. In json format.
 
@@ -55,18 +48,12 @@ Datasets are collected from Kaggle and Tripadvisor and are uploaded to AWS S3 `s
 
 
 ### Dimension table
-#### museum
-museum_id
-museum_name
-phone_num
-full_address
-city_id
-country
-category_id
-
 #### city
-city_id
-city_name
+| Field Name | Data Type | Description                 | Example      |
+|------------|-----------|-----------------------------|--------------|
+| city_id    | bigserial | primary key, unique city id | 28           |
+| city_name  | text      | city name                   | New York     |
+| country    | text      | city country                | United State |
 
 #### category
 | Field Name  | Data Type | Description                            | Example     |
@@ -77,20 +64,28 @@ city_name
 #### traveler
 | Field Name | Data Type | Description   | Example  |
 |------------|-----------|---------------|----------|
-| type_id    | integer   | primary key   | 1        |
+| type_id    | serial    | primary key   | 1        |
 | type       | text      | traveler type | Families |
 
 #### weather
-city_id
-date
-weather
+| Field Name | Data Type | Description                    | Example    |
+|------------|-----------|--------------------------------|------------|
+| city_id    | integer   | refers to city_id of city      | 1          |
+| weather_date| date     | date of weather                | 2019-06-01 |
+| weather    | numeric   | average temperature in celsius | 17.8       |
+
+#### museum
+| Field Name   | Data Type | Description                   | Example                        |
+|--------------|-----------|-------------------------------|--------------------------------|
+| museum_id    | bigserial | primary key, unique museum id | 281                            |
+| museum_name  | text      | museum name                   | The Metropolitan Museum of Art |
+| category_id  | integer   | what type of museum           | 2                              |
+| full_address | text      | full address of the museum    | 1000 Fifth Avenue              |
+| city_id      | integer   | city id                       | 827                            |
 
 
 ### Relationship diagram
-
-## Data dictionary
-Reference: https://www.tutorialspoint.com/What-is-Data-Dictionary
-
+![DB-diagram](DB-diagram.png)
 
 ## ETL pipeline
 
