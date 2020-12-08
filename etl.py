@@ -18,6 +18,9 @@ config.read('aws.cfg')
 os.environ['AWS_ACCESS_KEY_ID']=config['KEYS']['AWS_ACCESS_KEY_ID']
 os.environ['AWS_SECRET_ACCESS_KEY']=config['KEYS']['AWS_SECRET_ACCESS_KEY']
 
+# AWS role
+IAM = config['IAM_ROLE']['ARN']
+
 # Redshift cluster
 rs_host=config['CLUSTER']['HOST']
 rs_dbname=config['CLUSTER']['DB_NAME']
@@ -33,6 +36,8 @@ WEATHER_DATA = config['S3']['WEATHER_DATA_OUTPUT'] # parquet file output by Spar
 CATEGORY_DATA = config['S3']['CATEGORY_DATA']      # json file
 RATING_DATA = config['S3']['RATING_DATA']          # json file
 TRAVELER_DATA = config['S3']['TRAVELER_DATA']      # json file
+CATEGORY_JSONPATH = config['S3']['CATEGORY_JSONPATH']
+TRAVELER_JSONPATH = config['S3']['TRAVELER_JSONPATH']
 
 # Country and weather date
 COUNTRY = config['FILTER']['COUNTRY']
@@ -83,6 +88,8 @@ def main():
             3. Check data quality in tables
     """
 
+    print("awesome-museum ETL executing...")
+
     # step 1
     spark = create_spark_session()
 
@@ -95,11 +102,19 @@ def main():
     drop_tables(conn, cur, drop_table_queries)
     create_tables(conn, cur, create_table_queries)
 
-    staging_category_data()
-    staging_traveler_data()
+    staging_museum_sql = staging_museum_table_copy.format(s3_bucket=MUSEUM_DATA, arn_role=IAM)
+    staging_museum_data(cur, conn, staging_museum_sql)
+
+    staging_weather_sql = staging_weather_table_copy.format(s3_bucket=WEATHER_DATA, arn_role=IAM)
+    staging_weather_data(cur, conn, staging_weather_sql)
+                            
+    staging_category__sql = staging_category_table_copy.format(s3_bucket=CATEGORY_DATA, arn_role=IAM, json_path=CATEGORY_JSONPATH)
+    staging_category_data(cur, conn, staging_category__sql)
+
+    staging_traveler__sql = staging_category_table_copy.format(s3_bucket=TRAVELER_DATA, arn_role=IAM, json_path=TRAVELER_JSONPATH)
+    staging_traveler_data(cur, conn, staging_traveler__sql)
     staging_rating_data()
-    staging_museum_data()
-    staging_weather_data()
+    
 
     # step 3
     data_quality_check(cur, conn, select_count_staging_queries)
@@ -118,6 +133,8 @@ def main():
     # close spark session and redshift connection
     conn.close()
     spark.stop()
+
+    print("awesome-museum ETL complete")
 
 
 if __name__ == "__main__":

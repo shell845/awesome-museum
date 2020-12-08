@@ -94,3 +94,56 @@ def process_weather_data(spark, input_data, output_data, country, weather_since)
 
     print("Process weather data complete")
 
+def staging_museum_data(cur, conn, queries):
+    '''
+    copy data from S3 parquet files to Redshift staging table
+    '''
+    for query in queries:
+        cur.execute(query)
+        conn.commit()
+    print("Copy data from S3 to staging_museum complete")
+
+
+def staging_weather_data(cur, conn, queries):
+    '''
+    copy data from S3 parquet files to Redshift staging table
+    '''
+    for query in queries:
+        cur.execute(query)
+        conn.commit()
+    print("Copy data from S3 to staging_weather complete")
+
+
+def staging_category_data(cur, conn, queries):
+    '''
+    copy data from S3 json files to Redshift staging table
+    '''
+    for query in queries:
+        cur.execute(query)
+        conn.commit()
+    print("Copy data from S3 to staging_category complete")
+
+
+def staging_traveler_data(cur, conn, queries):
+    pass
+
+def staging_rating_data(cur, conn, queries):
+    pass
+
+def transform_category(cur, conn, queries):
+    pass
+
+def transform_traveler(cur, conn, queries):
+    pass
+
+def transform_rating(cur, conn, queries):
+    pass
+
+def transform_weather(cur, conn, queries):
+    pass
+
+def transform_museum(cur, conn, queries):
+    pass
+
+def transform_museum_fact(cur, conn, queries):
+    pass

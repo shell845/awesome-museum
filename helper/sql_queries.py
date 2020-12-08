@@ -1,21 +1,6 @@
 import configparser
 
 #
-# CONFIG
-#
-config = configparser.ConfigParser()
-config.read('aws.cfg')
-
-IAM = config['IAM_ROLE']['ARN']
-
-MUSEUM_DATA = config['S3']['MUSEUM_DATA_OUTPUT']   # parquet file output by Spark
-WEATHER_DATA = config['S3']['WEATHER_DATA_OUTPUT'] # parquet file output by Spark
-CATEGORY_DATA = config['S3']['CATEGORY_DATA']      # json file
-RATING_DATA = config['S3']['RATING_DATA']          # json file
-TRAVELER_DATA = config['S3']['TRAVELER_DATA']      # json file
-LOG_JSONPATH = config['S3']['']
-
-#
 # DROP STAGING TABLES
 #
 staging_category_table_drop = "DROP TABLE IF EXISTS staging_category"
@@ -40,15 +25,18 @@ museum_fact_table_drop = "DROP TABLE IF EXISTS museum_fact"
 staging_category_table_create = ("""
     CREATE TABLE staging_category (
         museum text,
-        museum_type text
+        category text
     )
 """)
 
 staging_traveler_table_create = ("""
     CREATE TABLE staging_traveler (
         museum text,
-        traveler_type text,
-        traveler_count, integer
+        Families text,
+        Couples text,
+        Solo text,
+        Business text,
+        Friends text
     )
 """)
 
@@ -138,20 +126,25 @@ museum_fact_table_create = ("""
 # COPY DATA TO STAGING TABLES
 #
 staging_weather_table_copy = ("""
-
+    COPY staging_weather
+    FROM {s3_bucket}
+    IAM_ROLE {arn_role}
+    FORMAT AS PARQUET;
 """)
 
 staging_museum_table_copy = ("""
-
+    COPY staging_museum
+    FROM {s3_bucket}
+    IAM_ROLE {arn_role}
+    FORMAT AS PARQUET;
 """)
 
 staging_category_table_copy = ("""
-    copy table 
+    copy staging_category 
     from {data_bucket}
     iam_role {role_arn}
-    json {log_json_path}
-    timeformat as 'epochmillisecs'
-""").format(data_bucket=LOG_DATA, role_arn=IAM, log_json_path=LOG_JSONPATH)
+    json {json_path}
+""")
 
 staging_traveler_table_copy = ("""
     copy table 
@@ -159,7 +152,7 @@ staging_traveler_table_copy = ("""
     iam_role {role_arn}
     json {log_json_path}
     timeformat as 'epochmillisecs'
-""").format(data_bucket=LOG_DATA, role_arn=IAM, log_json_path=LOG_JSONPATH)
+""")
 
 staging_rating_table_copy = ("""
     copy table 
@@ -167,7 +160,7 @@ staging_rating_table_copy = ("""
     iam_role {role_arn}
     json {log_json_path}
     timeformat as 'epochmillisecs'
-""").format(data_bucket=LOG_DATA, role_arn=IAM, log_json_path=LOG_JSONPATH)
+""")
 
 
 #
