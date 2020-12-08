@@ -208,11 +208,25 @@ def main():
     drop_tables(conn, cur, drop_table_queries)
     create_tables(conn, cur, create_table_queries)
 
+    staging_category_data()
+    staging_traveler_data()
+    staging_rating_data()
+    staging_museum_data()
+    staging_weather_data()
+
     # step 3
+    data_quality_check(cur, conn, select_count_staging_queries)
 
     # step 4
+    transform_category()
+    transform_traveler()
+    transform_rating()
+    transform_weather()
+    transform_museum()
+    transform_museum_fact()
 
     # step 5
+    data_quality_check(cur, conn, select_count_queries)
 
     # close spark session and redshift connection
     conn.close()
