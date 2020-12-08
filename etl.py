@@ -98,8 +98,9 @@ def process_museum_data(spark, input_data, output_data):
             input_data: S3 path of input data files
             output_data: S3 path of output parquet files
     """
+    print("Process museum data start")
     
-    museum_data = input_data + '/*.csv'
+    museum_data = input_data + '*.csv'
  
     museumSchema = StructType([
         StructField("mid", StringType()),
@@ -111,17 +112,16 @@ def process_museum_data(spark, input_data, output_data):
         StructField("Latitude", DoubleType()),
         StructField("LengthOfVisit", StringType()),
         StructField("MuseumName", StringType()),
-        StructField("PhoneNum", StringType())
-        StructField("Rank", DoubleType())
-        StructField("Rating", DoubleType())
-        StructField("ReviewCount", StringType())
+        StructField("PhoneNum", StringType()),
+        StructField("Rank", DoubleType()),
+        StructField("Rating", DoubleType()),
+        StructField("ReviewCount", StringType()),
         StructField("TotalThingsToDo", StringType())
     ])
-    
-    df = spark.read.json(song_data, schema=songSchema)
+
     df = spark.read.format("csv").option("header", True).schema(museumSchema).load(museum_data)
    
-    split_address = F.split(df[Address], ", ")
+    split_address = F.split(df["Address"], ", ")
     df = df.withColumn("City", split_address.getItem(F.size(split_address) - 2))
     museum_fields = ["MuseumName", "Rating", "City", "Address"]
     museum_table = df.select(museum_fields).dropDuplicates()
@@ -129,80 +129,41 @@ def process_museum_data(spark, input_data, output_data):
     # write to parquet
     museum_table.write.partitionBy("City").parquet(output_data)
 
+    print("Process museum data complete")
 
-def process_log_data(spark, input_data, output_data):
+
+def process_weather_data(spark, input_data, output_data):
     """
-        This function extract log data files from S3,
-        transform to songplays, users and time tables, 
+        This function extract weather data files (csv) from S3,
+        transform to weather table, 
         output as parquet files and load back to S3
         
         Parameters:
             spark: spark session
-            input_data: S3 path of input log files
+            input_data: S3 path of input data files
             output_data: S3 path of output parquet files
     """
-    
-    # log data file
-    log_data = input_data + 'log_data/*.json'
-    # for testing
-    # remove for submission
-    log_data = input_data + 'log_data/2018/11/2018-11-27-events.json'
+    print("Process weather data start")
+    weather_data = input_data + '*.csv'
+ 
+    weatherSchema = StructType([
+        StructField("dt", DateType()),
+        StructField("AverageTemperature", DoubleType()),
+        StructField("City", StringType()),
+        StructField("Country", StringType())
+    ])
 
+    df = spark.read.format("csv").option("header", True).schema(weatherSchema).load(weather_data)
 
-    df = spark.read.json(log_data)
-    dfNextSong = df.filter(df.page == 'NextSong')
+    df = df.filter(df("dt").gt(lit("2013-01-01"))) 
+   
+    weather_fields = ["dt", "AverageTemperature", "City", "Country"]
+    weather_table = df.select(weather_fields).dropDuplicates()
 
-    # create users table    
-    dfNextSong = dfNextSong.withColumn("userId", dfNextSong["userId"].cast(IntegerType()))
-    users_fields = ["userId as user_id", "firstName as first_name", "lastName as last_name", "gender", "level"]
-    users_table = dfNextSong.selectExpr(users_fields).dropDuplicates()
-    
-    # write users table
-    users_table.write.parquet(output_data + "users/")
+    # write to parquet
+    weather_table.write.partitionBy("City").parquet(output_data)
 
-    # create time table
-    get_timestamp = udf(lambda x: datetime.fromtimestamp(x/1000.0), TimestampType())
-    dfNextSong = dfNextSong.withColumn("timestamp", get_timestamp('ts'))
-    
-    get_datetime = udf(lambda x: datetime.fromtimestamp(x/1000.0), DateType())
-    dfNextSong = dfNextSong.withColumn("start_time", get_datetime('ts'))
-
-    time_table = dfNextSong.select("start_time").dropDuplicates() \
-        .withColumn("hour", hour(col("start_time"))).withColumn("day", dayofmonth(col("start_time"))) \
-        .withColumn("week", weekofyear(col("start_time"))).withColumn("month", month(col("start_time"))) \
-        .withColumn("year", year(col("start_time"))).withColumn("weekday", date_format(col("start_time"), 'E'))
-    
-    # write time table
-    time_table.write.partitionBy("year", "month").parquet(output_data + 'time/')
-
-    # create songplays table
-    song_df = spark.read.parquet(output_data + 'songs/*/*/*')
-    artists_df = spark.read.parquet(output_data + 'artists/*')
-    
-    songs_logs = dfNextSong.join(song_df, (dfNextSong.song == song_df.title))
-    
-    artists_songs_logs = songs_logs.join(artists_df, (songs_logs.artist == artists_df.name)).drop(artists_df.location)
-    
-    songplays = artists_songs_logs.join(time_table, (artists_songs_logs.start_time == time_table.start_time), 'left').drop(artists_songs_logs.start_time)
-    
-    songplays = songplays.withColumn("songplay_id", F.monotonically_increasing_id())
-
-    songplays_table = songplays.select(
-        col("songplay_id"),
-        col('start_time'),
-        col('userId').alias('user_id'),
-        col('level'),
-        col('song_id'),
-        col('artist_id'),
-        col('sessionId'),
-        col('location'),
-        col('userAgent').alias('user_agent'),
-        col('year').alias('year'),
-        col('month').alias('month')
-    )
-
-    # write songplays table
-    songplays_table.write.partitionBy("year", "month").parquet(output_data + 'songplays/')
+    print("Process weather data complete")
 
 
 def data_quality_check(cur, conn, queries):
@@ -235,18 +196,17 @@ def main():
             3. Check data quality in tables
     """
 
-    # step 0 - create spark session and redshift connection, create redshift tables
-    spark = create_spark_session()
-    conn, cur = create_redshift_connection()
-
-    drop_tables(conn, cur, drop_table_queries)
-    create_tables(conn, cur, create_table_queries)
-
     # step 1
+    spark = create_spark_session()
+
     process_museum_data(spark, MUSEUM_DATA_RAW, MUSEUM_DATA)
     process_weather_data(spark, WEATHER_DATA_RAW, WEATHER_DATA)
 
     # step 2
+    conn, cur = create_redshift_connection()
+
+    drop_tables(conn, cur, drop_table_queries)
+    create_tables(conn, cur, create_table_queries)
 
     # step 3
 
