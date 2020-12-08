@@ -5,7 +5,7 @@ import configparser
 #
 staging_category_table_drop = "DROP TABLE IF EXISTS staging_category"
 staging_traveler_table_drop = "DROP TABLE IF EXISTS staging_traveler"
-staging_rating_table_drop = "DROP TABLE IF EXISTS staging_rating"
+# staging_rating_table_drop = "DROP TABLE IF EXISTS staging_rating"
 staging_weather_table_drop = "DROP TABLE IF EXISTS staging_weather"
 staging_museum_table_drop = "DROP TABLE IF EXISTS staging_museum"
 
@@ -40,13 +40,13 @@ staging_traveler_table_create = ("""
     )
 """)
 
-staging_rating_table_create = ("""
-    CREATE TABLE staging_rating (
-        museum text,
-        rank text,
-        rank_count integer
-    )
-""")
+# staging_rating_table_create = ("""
+#     CREATE TABLE staging_rating (
+#         museum text,
+#         rank text,
+#         rank_count integer
+#     )
+# """)
 
 staging_weather_table_create = ("""
     CREATE TABLE staging_weather (
@@ -154,13 +154,13 @@ staging_traveler_table_copy = ("""
     timeformat as 'epochmillisecs'
 """)
 
-staging_rating_table_copy = ("""
-    copy table 
-    from {data_bucket}
-    iam_role {role_arn}
-    json {log_json_path}
-    timeformat as 'epochmillisecs'
-""")
+# staging_rating_table_copy = ("""
+#     copy table 
+#     from {data_bucket}
+#     iam_role {role_arn}
+#     json {log_json_path}
+#     timeformat as 'epochmillisecs'
+# """)
 
 
 #
@@ -214,9 +214,9 @@ get_number_staging_traveler_table = ("""
     SELECT COUNT(*) FROM staging_traveler
 """)
 
-get_number_staging_rating_table = ("""
-    SELECT COUNT(*) FROM staging_rating
-""")
+# get_number_staging_rating_table = ("""
+#     SELECT COUNT(*) FROM staging_rating
+# """)
 
 get_number_staging_weather_table = ("""
     SELECT COUNT(*) FROM staging_weather
@@ -257,9 +257,9 @@ get_number_museum_fact_table = ("""
 #
 # QUERY LISTS
 #
-create_table_queries = [staging_category_table_create, staging_traveler_table_create, staging_rating_table_create, staging_weather_table_create, staging_museum_table_create, city_table_create, category_table_create, traveler_table_create, weather_table_create, museum_table_create, museum_fact_table_create]
-drop_table_queries = [staging_category_table_drop, staging_traveler_table_drop, staging_rating_table_drop, staging_weather_table_drop, staging_museum_table_drop, city_table_drop, category_table_drop, traveler_table_drop, weather_table_drop, museum_table_drop, museum_fact_table_drop]
-copy_table_queries = [staging_weather_table_copy, staging_museum_table_copy, staging_category_table_copy, staging_traveler_table_copy, staging_rating_table_copy]
+create_table_queries = [staging_category_table_create, staging_traveler_table_create, staging_weather_table_create, staging_museum_table_create, city_table_create, category_table_create, traveler_table_create, weather_table_create, museum_table_create, museum_fact_table_create]
+drop_table_queries = [staging_category_table_drop, staging_traveler_table_drop, staging_weather_table_drop, staging_museum_table_drop, city_table_drop, category_table_drop, traveler_table_drop, weather_table_drop, museum_table_drop, museum_fact_table_drop]
+copy_table_queries = [staging_weather_table_copy, staging_museum_table_copy, staging_category_table_copy, staging_traveler_table_copy]
 insert_table_queries = [city_table_insert, category_table_insert, traveler_table_insert, weather_table_insert, museum_table_insert, museum_fact_table_insert]
-select_count_staging_queries= [get_number_staging_category_table, get_number_staging_traveler_table, get_number_staging_rating_table, get_number_staging_weather_table, get_number_staging_museum_table]
+select_count_staging_queries= [get_number_staging_category_table, get_number_staging_traveler_table, get_number_staging_weather_table, get_number_staging_museum_table]
 select_count_queries= [get_number_city_table, get_number_category_table, get_number_traveler_table, get_number_weather_table, get_number_museum_table, get_number_museum_fact_table]

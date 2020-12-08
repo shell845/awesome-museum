@@ -1,3 +1,6 @@
+import boto3
+import json
+
 #
 # Functions to process and transform data
 #
@@ -94,6 +97,63 @@ def process_weather_data(spark, input_data, output_data, country, weather_since)
 
     print("Process weather data complete")
 
+
+def process_category_data(s3_bucket, s3_key, s3_region, aws_id, aws_key):
+    """
+        This function load category data file (json) from S3,
+        do data cleaning and re-format,
+        and write back to S3
+        
+        Parameters:
+            s3_bucket: S3 bucket
+            s3_key: S3 key
+            s3_region: S3 region
+            aws_id: AWS access key id
+            aws_key: AWS access key secret
+    """
+
+    s3 = boto3.resource('s3',
+        region_name=s3_region,
+        aws_access_key_id=aws_id,
+        aws_secret_access_key=aws_key
+        )
+
+    content_object = s3.Object(s3_bucket, s3_key)
+    file_content = content_object.get()['Body'].read().decode('utf-8')
+    json_content = json.loads(file_content)
+
+    print(json_content)
+    print("Process category data complete")
+
+
+def process_traveler_data(s3_bucket, s3_key, s3_region, aws_id, aws_key):
+    """
+        This function load traveler data file (json) from S3,
+        do data cleaning and re-format,
+        and write back to S3
+        
+        Parameters:
+            s3_bucket: S3 bucket
+            s3_key: S3 key
+            s3_region: S3 region
+            aws_id: AWS access key id
+            aws_key: AWS access key secret
+    """
+
+    s3 = boto3.resource('s3',
+        region_name=s3_region,
+        aws_access_key_id=aws_id,
+        aws_secret_access_key=aws_key
+        )
+
+    content_object = s3.Object(s3_bucket, s3_key)
+    file_content = content_object.get()['Body'].read().decode('utf-8')
+    json_content = json.loads(file_content)
+
+    print(json_content)
+    print("Process traveler data complete")
+
+
 def staging_museum_data(cur, conn, queries):
     '''
     copy data from S3 parquet files to Redshift staging table
@@ -115,14 +175,7 @@ def staging_weather_data(cur, conn, queries):
 
 
 def staging_category_data(cur, conn, queries):
-    '''
-    copy data from S3 json files to Redshift staging table
-    '''
-    for query in queries:
-        cur.execute(query)
-        conn.commit()
-    print("Copy data from S3 to staging_category complete")
-
+    pass
 
 def staging_traveler_data(cur, conn, queries):
     pass

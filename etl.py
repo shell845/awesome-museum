@@ -34,10 +34,15 @@ MUSEUM_DATA = config['S3']['MUSEUM_DATA_OUTPUT']   # parquet file output by Spar
 WEATHER_DATA_RAW = config['S3']['WEATHER_DATA']    # csv file
 WEATHER_DATA = config['S3']['WEATHER_DATA_OUTPUT'] # parquet file output by Spark
 CATEGORY_DATA = config['S3']['CATEGORY_DATA']      # json file
-RATING_DATA = config['S3']['RATING_DATA']          # json file
+# RATING_DATA = config['S3']['RATING_DATA']          # json file
 TRAVELER_DATA = config['S3']['TRAVELER_DATA']      # json file
-CATEGORY_JSONPATH = config['S3']['CATEGORY_JSONPATH']
-TRAVELER_JSONPATH = config['S3']['TRAVELER_JSONPATH']
+
+CATEGORY_BUCKET = config['S3']['CATEGORY_BUCKET'] 
+CATEGORY_KEY = config['S3']['CATEGORY_KEY']
+TRAVELER_BUCKET = config['S3']['CATEGORY_BUCKET'] 
+TRAVELER_KEY = config['S3']['CATEGORY_KEY']
+
+S3_REGION = config['S3']['REGION']
 
 # Country and weather date
 COUNTRY = config['FILTER']['COUNTRY']
@@ -94,7 +99,14 @@ def main():
     spark = create_spark_session()
 
     process_museum_data(spark, MUSEUM_DATA_RAW, MUSEUM_DATA)
+
     process_weather_data(spark, WEATHER_DATA_RAW, WEATHER_DATA)
+
+    process_category_data(CATEGORY_BUCKET, CATEGORY_KEY, S3_REGION, os.environ['AWS_ACCESS_KEY_ID'], os.environ['AWS_SECRET_ACCESS_KEY'])
+
+    process_traveler_data(TRAVELER_BUCKET, TRAVELER_KEY, S3_REGION, os.environ['AWS_ACCESS_KEY_ID'], os.environ['AWS_SECRET_ACCESS_KEY'])
+    
+
 
     # step 2
     conn, cur = create_redshift_connection()
@@ -108,11 +120,11 @@ def main():
     staging_weather_sql = staging_weather_table_copy.format(s3_bucket=WEATHER_DATA, arn_role=IAM)
     staging_weather_data(cur, conn, staging_weather_sql)
                             
-    staging_category__sql = staging_category_table_copy.format(s3_bucket=CATEGORY_DATA, arn_role=IAM, json_path=CATEGORY_JSONPATH)
-    staging_category_data(cur, conn, staging_category__sql)
+    # staging_category__sql = staging_category_table_copy.format(s3_bucket=CATEGORY_DATA, arn_role=IAM, json_path=CATEGORY_JSONPATH)
+    # staging_category_data(cur, conn, staging_category__sql)
 
-    staging_traveler__sql = staging_category_table_copy.format(s3_bucket=TRAVELER_DATA, arn_role=IAM, json_path=TRAVELER_JSONPATH)
-    staging_traveler_data(cur, conn, staging_traveler__sql)
+    # staging_traveler__sql = staging_category_table_copy.format(s3_bucket=TRAVELER_DATA, arn_role=IAM, json_path=TRAVELER_JSONPATH)
+    # staging_traveler_data(cur, conn, staging_traveler__sql)
     staging_rating_data()
     
 
