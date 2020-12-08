@@ -74,19 +74,10 @@ staging_weather_table_create = ("""
 
 staging_museum_table_create = ("""
     CREATE TABLE staging_museum (
-        Address text,
-        Description text,
-        FeatureCount integer,
-        Fee text,
-        Langtitude numeric,
-        Latitude numeric,
-        LengthOfVisit text,
         MuseumName text,
-        PhoneNum text,
-        Rank numeric,
         Rating numeric,
-        ReviewCount integer,
-        TotalThingsToDo text
+        City text,
+        Address text
     )
 """)
 

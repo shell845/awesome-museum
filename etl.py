@@ -1,11 +1,11 @@
 import configparser
 import os
+import psycopg2
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import udf, col
-from pyspark.sql.functions import year, month, dayofmonth, hour, weekofyear, date_format
+from pyspark.sql import functions as F
 from pyspark.sql.types import *
 from datetime import datetime
-from pyspark.sql import functions as F
 
 from sql_queries import *
 
@@ -41,6 +41,8 @@ def create_spark_session():
         Or get existing spark session
         and return the spark session
     """
+    print("Creat Spark session start")
+
     spark = SparkSession \
         .builder \
         .config("spark.jars.packages", "org.apache.hadoop:hadoop-aws:2.7.0") \
@@ -48,6 +50,8 @@ def create_spark_session():
         .config("spark.hadoop.fs.s3a.awsAccessKeyId", os.environ['AWS_ACCESS_KEY_ID']) \
         .config("spark.hadoop.fs.s3a.awsSecretAccessKey", os.environ['AWS_SECRET_ACCESS_KEY']) \
         .getOrCreate()
+
+    print("Create Spark session complete")
     return spark
 
 
@@ -56,58 +60,74 @@ def create_redshift_connection():
         Create Redshift connection
         and return the connection
     """
+    print("Creat Spark session start")
+
     conn = psycopg2.connect(f"host={rs_host} dbname={rs_dbname} user={rs_user} password={rs_password} port={rs_port}")
     cur = conn.cursor()
+
+    print("Create Spark session complete")
     return conn, cur
 
 
-def process_song_data(spark, input_data, output_data):
+def drop_tables(cur, conn, queries):
+    '''
+    drop existings redshift table 
+    '''
+    for query in queries:
+        cur.execute(query)
+        conn.commit()
+
+
+def create_tables(cur, conn, queries):
+    '''
+    create redshift tables
+    '''
+    for query in queries:
+        cur.execute(query)
+        conn.commit()
+
+
+def process_museum_data(spark, input_data, output_data):
     """
-        This function extract song data files from S3,
-        transform to songs and artists tables, 
+        This function extract museum data files (csv) from S3,
+        transform to museum table, 
         output as parquet files and load back to S3
         
         Parameters:
             spark: spark session
-            input_data: S3 path of input log files
+            input_data: S3 path of input data files
             output_data: S3 path of output parquet files
     """
     
-    # song data file
-    song_data = input_data + 'song_data/*/*/*/*.json'
-    # for testing
-    # remove for submission
-    song_data = input_data + 'song_data/A/D/O/*.json'
-    
-    
-    songSchema = StructType([
-        StructField("artist_id", StringType()),
-        StructField("artist_latitude", DoubleType()),
-        StructField("artist_location", StringType()),
-        StructField("artist_longitude", DoubleType()),
-        StructField("artist_name", StringType()),
-        StructField("duration", DoubleType()),
-        StructField("num_songs", IntegerType()),
-        StructField("song_id", StringType()),
-        StructField("title", StringType()),
-        StructField("year", IntegerType())
+    museum_data = input_data + '/*.csv'
+ 
+    museumSchema = StructType([
+        StructField("mid", StringType()),
+        StructField("Address", StringType()),
+        StructField("Description", StringType()),
+        StructField("FeatureCount", IntegerType()),
+        StructField("Fee", StringType()),
+        StructField("Langtitude", DoubleType()),
+        StructField("Latitude", DoubleType()),
+        StructField("LengthOfVisit", StringType()),
+        StructField("MuseumName", StringType()),
+        StructField("PhoneNum", StringType())
+        StructField("Rank", DoubleType())
+        StructField("Rating", DoubleType())
+        StructField("ReviewCount", StringType())
+        StructField("TotalThingsToDo", StringType())
     ])
     
     df = spark.read.json(song_data, schema=songSchema)
+    df = spark.read.format("csv").option("header", True).schema(museumSchema).load(museum_data)
    
-    # create songs table
-    song_fields = ["song_id", "title", "artist_id", "year", "duration"]
-    songs_table = df.select(song_fields).dropDuplicates()
-    
-    # write songs table
-    songs_table.write.partitionBy("year", "artist_id").parquet(output_data + 'songs/')
+    split_address = F.split(df[Address], ", ")
+    df = df.withColumn("City", split_address.getItem(F.size(split_address) - 2))
+    museum_fields = ["MuseumName", "Rating", "City", "Address"]
+    museum_table = df.select(museum_fields).dropDuplicates()
 
-    # create artists table
-    artists_fields = ["artist_id", "artist_name as name", "artist_location as location", "artist_latitude as latitude", "artist_longitude as longitude"]
-    artists_table = df.selectExpr(artists_fields).dropDuplicates()
-    
-    # write artists table
-    artists_table.write.parquet(output_data + 'artists/')
+    # write to parquet
+    museum_table.write.partitionBy("City").parquet(output_data)
 
 
 def process_log_data(spark, input_data, output_data):
@@ -215,20 +235,28 @@ def main():
             3. Check data quality in tables
     """
 
-    # step 1
+    # step 0 - create spark session and redshift connection, create redshift tables
     spark = create_spark_session()
-    
-    process_song_data(spark, input_data, output_data)    
-    process_log_data(spark, input_data, output_data)
+    conn, cur = create_redshift_connection()
+
+    drop_tables(conn, cur, drop_table_queries)
+    create_tables(conn, cur, create_table_queries)
+
+    # step 1
+    process_museum_data(spark, MUSEUM_DATA_RAW, MUSEUM_DATA)
+    process_weather_data(spark, WEATHER_DATA_RAW, WEATHER_DATA)
 
     # step 2
-    conn, cur = create_redshift_connection()
 
     # step 3
 
     # step 4
 
     # step 5
+
+    # close spark session and redshift connection
+    conn.close()
+    spark.stop()
 
 
 if __name__ == "__main__":
