@@ -64,11 +64,8 @@ staging_weather_table_create = ("""
     CREATE TABLE staging_weather (
         dt date,
         AverageTemperature numeric,
-        AverageTemperatureUncertainty numeric,
         City text,
-        Country text,
-        Latitude numeric,
-        Longitude numeric
+        Country text
     )
 """)
 
