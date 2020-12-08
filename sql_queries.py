@@ -96,7 +96,7 @@ staging_museum_table_create = ("""
 city_table_create = ("""
     CREATE TABLE "city" (
         "city_id" bigserial PRIMARY KEY,
-        "city_name" text NOT NULL,
+        "city_name" text NOT NULL SORTKEY DISTKEY,
         "country" text NOT NULL
     )
 """)
@@ -117,8 +117,8 @@ traveler_table_create = ("""
 
 weather_table_create = ("""
     CREATE TABLE "weather" (
-        "city_id" integer,
-        "weather_date" date,
+        "city_id" integer DISTKEY,
+        "weather_date" date SORTKEY,
         "weather" numeric
     )
 """)
@@ -126,19 +126,19 @@ weather_table_create = ("""
 museum_table_create = ("""
     CREATE TABLE "museum" (
         "museum_id" bigserial PRIMARY KEY,
-        "museum_name" text NOT NULL,
+        "museum_name" text NOT NULL SORTKEY,
         "category_id" integer NOT NULL,
         "full_address" text NOT NULL,
-        "city_id" integer NOT NULL
+        "city_id" integer NOT NULL DISTKEY
     )
 """)
 
 museum_fact_table_create = ("""
     CREATE TABLE "museum_fact" (
         "fact_id" bigserial PRIMARY KEY,
-        "museum_id" integer NOT NULL,
+        "museum_id" integer NOT NULL SORTKEY,
         "category_id" integer NOT NULL,
-        "city_id" integer NOT NULL,
+        "city_id" integer NOT NULL DISTKEY,
         "rating" numeric,
         "weather" numeric,
         "traveler_type_id" integer
