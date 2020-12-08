@@ -98,7 +98,7 @@ def process_weather_data(spark, input_data, output_data, country, weather_since)
     print("Process weather data complete")
 
 
-def process_category_data(s3_bucket, s3_key, s3_region, aws_id, aws_key):
+def process_category_data(s3_bucket, s3_key, s3_output_key, s3_region, aws_id, aws_key):
     """
         This function load category data file (json) from S3,
         do data cleaning and re-format,
@@ -106,27 +106,42 @@ def process_category_data(s3_bucket, s3_key, s3_region, aws_id, aws_key):
         
         Parameters:
             s3_bucket: S3 bucket
-            s3_key: S3 key
+            s3_key: S3 key for input raw data file
+            s3_output_key: S3 key for output file
             s3_region: S3 region
             aws_id: AWS access key id
             aws_key: AWS access key secret
     """
-
+    print("Process category data start")
+    # read in raw data
     s3 = boto3.resource('s3',
-        region_name=s3_region,
-        aws_access_key_id=aws_id,
-        aws_secret_access_key=aws_key
-        )
-
-    content_object = s3.Object(s3_bucket, s3_key)
-    file_content = content_object.get()['Body'].read().decode('utf-8')
+                    region_name=s3_region,
+                    aws_access_key_id=aws_id,
+                    aws_secret_access_key=aws_key
+                   )
+    input_object = s3.Object(s3_bucket, s3_key)
+    file_content = input_object.get()['Body'].read().decode('utf-8')
     json_content = json.loads(file_content)
 
-    print(json_content)
+    # format raw data
+    temp = [
+    {"museum": key, "category": values[0]}
+    for key, values in json_content.items()
+    ]
+
+    # output formatted data
+    output_data = "".join([json.dumps(line) for line in temp])
+    output_object = s3.Object(s3_bucket, s3_output_key)
+    output_object.put(Body=(output_data.encode('UTF-8')))
+
+    # set object permission
+    object_acl = s3.ObjectAcl(s3_bucket,s3_output_key)
+    object_acl.put(ACL='public-read')
+
     print("Process category data complete")
 
 
-def process_traveler_data(s3_bucket, s3_key, s3_region, aws_id, aws_key):
+def process_traveler_data(s3_bucket, s3_key, s3_output_key, s3_region, aws_id, aws_key):
     """
         This function load traveler data file (json) from S3,
         do data cleaning and re-format,
@@ -134,23 +149,38 @@ def process_traveler_data(s3_bucket, s3_key, s3_region, aws_id, aws_key):
         
         Parameters:
             s3_bucket: S3 bucket
-            s3_key: S3 key
+            s3_key: S3 key for input raw data file
+            s3_output_key: S3 key for output file
             s3_region: S3 region
             aws_id: AWS access key id
             aws_key: AWS access key secret
     """
-
+    print("Process traveler data start")
+    # read in raw data
     s3 = boto3.resource('s3',
-        region_name=s3_region,
-        aws_access_key_id=aws_id,
-        aws_secret_access_key=aws_key
-        )
-
-    content_object = s3.Object(s3_bucket, s3_key)
-    file_content = content_object.get()['Body'].read().decode('utf-8')
+                    region_name=s3_region,
+                    aws_access_key_id=aws_id,
+                    aws_secret_access_key=aws_key
+                   )
+    input_object = s3.Object(s3_bucket, s3_key)
+    file_content = input_object.get()['Body'].read().decode('utf-8')
     json_content = json.loads(file_content)
 
-    print(json_content)
+    # format raw data
+    temp = [
+    {"museum": key, "Families": values[0], "Couples": values[1], "Solo": values[2],"Business": values[3],"Friends": values[4]}
+    for key, values in json_content.items()
+    ]
+
+    # output formatted data
+    output_data = "".join([json.dumps(line) for line in temp])
+    output_object = s3.Object(s3_bucket, s3_output_key)
+    output_object.put(Body=(output_data.encode('UTF-8')))
+
+    # set object permission
+    object_acl = s3.ObjectAcl(s3_bucket,s3_output_key)
+    object_acl.put(ACL='public-read')
+
     print("Process traveler data complete")
 
 

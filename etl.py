@@ -1,6 +1,8 @@
 import configparser
 import os
 import psycopg2
+import boto3
+import json
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import udf, col
 from pyspark.sql import functions as F
@@ -29,18 +31,21 @@ rs_password=config['CLUSTER']['DB_PASSWORD']
 rs_port=config['CLUSTER']['DB_PORT']
 
 # S3
-MUSEUM_DATA_RAW = config['S3']['MUSEUM_DATA']      # csv file
-MUSEUM_DATA = config['S3']['MUSEUM_DATA_OUTPUT']   # parquet file output by Spark
-WEATHER_DATA_RAW = config['S3']['WEATHER_DATA']    # csv file
-WEATHER_DATA = config['S3']['WEATHER_DATA_OUTPUT'] # parquet file output by Spark
-CATEGORY_DATA = config['S3']['CATEGORY_DATA']      # json file
-# RATING_DATA = config['S3']['RATING_DATA']          # json file
-TRAVELER_DATA = config['S3']['TRAVELER_DATA']      # json file
+MUSEUM_DATA_RAW = config['S3']['MUSEUM_DATA']             # csv file
+MUSEUM_DATA = config['S3']['MUSEUM_DATA_OUTPUT']          # parquet file output by Spark
+
+WEATHER_DATA_RAW = config['S3']['WEATHER_DATA']           # csv file
+WEATHER_DATA = config['S3']['WEATHER_DATA_OUTPUT']        # parquet file output by Spark
 
 CATEGORY_BUCKET = config['S3']['CATEGORY_BUCKET'] 
 CATEGORY_KEY = config['S3']['CATEGORY_KEY']
-TRAVELER_BUCKET = config['S3']['CATEGORY_BUCKET'] 
-TRAVELER_KEY = config['S3']['CATEGORY_KEY']
+CATEGORY_OUTPUT_KEY = config['S3']['CATEGORY_OUTPUT_KEY']
+CATEGORY_DATA = config['S3']['CATEGORY_DATA']             # json file
+
+TRAVELER_BUCKET = config['S3']['TRAVELER_BUCKET'] 
+TRAVELER_KEY = config['S3']['TRAVELER_KEY']
+TRAVELER_OUTPUT_KEY = config['S3']['TRAVELER_OUTPUT_KEY']
+TRAVELER_DATA = config['S3']['TRAVELER_DATA']             # json file
 
 S3_REGION = config['S3']['REGION']
 
@@ -86,8 +91,8 @@ def create_redshift_connection():
 def main():
     """
         Main function to:
-            1. Load museum and weather data from S3 for Spark process, and load back to S3
-            2. Load museum (processed by spark), weather (processed by spark), category, city and travel data from S3 to Redshift staging
+            1. Load raw data from S3 to Spark for cleaning, formatting and partition, and load back to S3
+            2. Load processed (in step 1) data from S3 to Redshift staging
             3. Check data quality in staging
             4. Transform staging data to fact and dimension tables
             3. Check data quality in tables
@@ -102,10 +107,9 @@ def main():
 
     process_weather_data(spark, WEATHER_DATA_RAW, WEATHER_DATA)
 
-    process_category_data(CATEGORY_BUCKET, CATEGORY_KEY, S3_REGION, os.environ['AWS_ACCESS_KEY_ID'], os.environ['AWS_SECRET_ACCESS_KEY'])
+    process_category_data(CATEGORY_BUCKET, CATEGORY_KEY, CATEGORY_OUTPUT_KEY, S3_REGION, os.environ['AWS_ACCESS_KEY_ID'], os.environ['AWS_SECRET_ACCESS_KEY'])
 
-    process_traveler_data(TRAVELER_BUCKET, TRAVELER_KEY, S3_REGION, os.environ['AWS_ACCESS_KEY_ID'], os.environ['AWS_SECRET_ACCESS_KEY'])
-    
+    process_traveler_data(TRAVELER_BUCKET, TRAVELER_KEY, TRAVELER_OUTPUT_KEY, S3_REGION, os.environ['AWS_ACCESS_KEY_ID'], os.environ['AWS_SECRET_ACCESS_KEY'])
 
 
     # step 2

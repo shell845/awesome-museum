@@ -32,11 +32,11 @@ staging_category_table_create = ("""
 staging_traveler_table_create = ("""
     CREATE TABLE staging_traveler (
         museum text,
-        Families text,
-        Couples text,
-        Solo text,
-        Business text,
-        Friends text
+        Families integer,
+        Couples integer,
+        Solo integer,
+        Business integer,
+        Friends integer
     )
 """)
 
