@@ -7,9 +7,6 @@ config = configparser.ConfigParser()
 config.read('aws.cfg')
 
 IAM = config['IAM_ROLE']['ARN']
-LOG_DATA = config['S3']['LOG_DATA']
-SONG_DATA = config['S3']['SONG_DATA']
-LOG_JSONPATH = config['S3']['LOG_JSONPATH']
 
 MUSEUM_DATA = config['S3']['MUSEUM_DATA_OUTPUT']   # parquet file output by Spark
 WEATHER_DATA = config['S3']['WEATHER_DATA_OUTPUT'] # parquet file output by Spark
