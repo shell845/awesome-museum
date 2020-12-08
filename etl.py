@@ -7,7 +7,7 @@ from pyspark.sql import functions as F
 from pyspark.sql.types import *
 from datetime import datetime
 
-from sql_queries import *
+from helper import *
 
 
 # Read configuration files
@@ -33,6 +33,10 @@ WEATHER_DATA = config['S3']['WEATHER_DATA_OUTPUT'] # parquet file output by Spar
 CATEGORY_DATA = config['S3']['CATEGORY_DATA']      # json file
 RATING_DATA = config['S3']['RATING_DATA']          # json file
 TRAVELER_DATA = config['S3']['TRAVELER_DATA']      # json file
+
+# Country and weather date
+COUNTRY = config['FILTER']['COUNTRY']
+WEATHER_SINCE = config['FILTER']['DATE']
 
 
 def create_spark_session():
@@ -67,123 +71,6 @@ def create_redshift_connection():
 
     print("Create Spark session complete")
     return conn, cur
-
-
-def drop_tables(cur, conn, queries):
-    '''
-    drop existings redshift table 
-    '''
-    for query in queries:
-        cur.execute(query)
-        conn.commit()
-
-
-def create_tables(cur, conn, queries):
-    '''
-    create redshift tables
-    '''
-    for query in queries:
-        cur.execute(query)
-        conn.commit()
-
-
-def process_museum_data(spark, input_data, output_data):
-    """
-        This function extract museum data files (csv) from S3,
-        transform to museum table, 
-        output as parquet files and load back to S3
-        
-        Parameters:
-            spark: spark session
-            input_data: S3 path of input data files
-            output_data: S3 path of output parquet files
-    """
-    print("Process museum data start")
-    
-    museum_data = input_data + '*.csv'
- 
-    museumSchema = StructType([
-        StructField("mid", StringType()),
-        StructField("Address", StringType()),
-        StructField("Description", StringType()),
-        StructField("FeatureCount", IntegerType()),
-        StructField("Fee", StringType()),
-        StructField("Langtitude", DoubleType()),
-        StructField("Latitude", DoubleType()),
-        StructField("LengthOfVisit", StringType()),
-        StructField("MuseumName", StringType()),
-        StructField("PhoneNum", StringType()),
-        StructField("Rank", DoubleType()),
-        StructField("Rating", DoubleType()),
-        StructField("ReviewCount", StringType()),
-        StructField("TotalThingsToDo", StringType())
-    ])
-
-    df = spark.read.format("csv").option("header", True).schema(museumSchema).load(museum_data)
-   
-    split_address = F.split(df["Address"], ", ")
-    df = df.withColumn("City", split_address.getItem(F.size(split_address) - 2))
-    museum_fields = ["MuseumName", "Rating", "City", "Address"]
-    museum_table = df.select(museum_fields).dropDuplicates()
-
-    # write to parquet
-    museum_table.write.partitionBy("City").parquet(output_data)
-
-    print("Process museum data complete")
-
-
-def process_weather_data(spark, input_data, output_data):
-    """
-        This function extract weather data files (csv) from S3,
-        transform to weather table, 
-        output as parquet files and load back to S3
-        
-        Parameters:
-            spark: spark session
-            input_data: S3 path of input data files
-            output_data: S3 path of output parquet files
-    """
-    print("Process weather data start")
-    weather_data = input_data + '*.csv'
- 
-    weatherSchema = StructType([
-        StructField("dt", DateType()),
-        StructField("AverageTemperature", DoubleType()),
-        StructField("City", StringType()),
-        StructField("Country", StringType())
-    ])
-
-    df = spark.read.format("csv").option("header", True).schema(weatherSchema).load(weather_data)
-
-    df = df.filter(df("dt").gt(lit("2013-01-01"))) 
-   
-    weather_fields = ["dt", "AverageTemperature", "City", "Country"]
-    weather_table = df.select(weather_fields).dropDuplicates()
-
-    # write to parquet
-    weather_table.write.partitionBy("City").parquet(output_data)
-
-    print("Process weather data complete")
-
-
-def data_quality_check(cur, conn, queries):
-    """
-    get record counts of each table
-
-    parameters:
-    1. cur : cursor of Redshift
-    2. conn : connection with Redshift
-    3. queries: sql queries to be executed
-    """
-    print(f"Data quality check - {queries}")
-    for query in queries:
-        print('Running ' + query)
-        cur.execute(query)
-        results = cur.fetchone()
-
-        for row in results:
-            print("   ", row)
-
 
 
 def main():
