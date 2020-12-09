@@ -33,9 +33,11 @@ rs_port=config['CLUSTER']['DB_PORT']
 # S3
 MUSEUM_DATA_RAW = config['S3']['MUSEUM_DATA']             # csv file
 MUSEUM_DATA = config['S3']['MUSEUM_DATA_OUTPUT']          # parquet file output by Spark
+MUSEUM_DATA_S3 = config['S3']['MUSEUM_DATA_S3']  
 
 WEATHER_DATA_RAW = config['S3']['WEATHER_DATA']           # csv file
 WEATHER_DATA = config['S3']['WEATHER_DATA_OUTPUT']        # parquet file output by Spark
+WEATHER_DATA_S3 = config['S3']['WEATHER_DATA_S3']
 
 CATEGORY_BUCKET = config['S3']['CATEGORY_BUCKET'] 
 CATEGORY_KEY = config['S3']['CATEGORY_KEY']
@@ -79,12 +81,12 @@ def create_redshift_connection():
         Create Redshift connection
         and return the connection
     """
-    print("Creat Spark session start")
+    print("Connect Redshift start")
 
     conn = psycopg2.connect(f"host={rs_host} dbname={rs_dbname} user={rs_user} password={rs_password} port={rs_port}")
     cur = conn.cursor()
 
-    print("Create Spark session complete")
+    print("Connect Redshift complete")
     return conn, cur
 
 
@@ -118,18 +120,19 @@ def main():
     drop_tables(conn, cur, drop_table_queries)
     create_tables(conn, cur, create_table_queries)
 
-    staging_museum_sql = staging_museum_table_copy.format(s3_bucket=MUSEUM_DATA, arn_role=IAM)
-    staging_museum_data(cur, conn, staging_museum_sql)
+    arn = "'" + IAM + "'"
 
-    staging_weather_sql = staging_weather_table_copy.format(s3_bucket=WEATHER_DATA, arn_role=IAM)
-    staging_weather_data(cur, conn, staging_weather_sql)
+    staging_museum_sql = staging_museum_table_copy.format(s3_bucket=MUSEUM_DATA_S3, arn_role=arn)
+    staging_museum_data(cur, conn, [staging_museum_sql])
+
+    staging_weather_sql = staging_weather_table_copy.format(s3_bucket=WEATHER_DATA_S3, arn_role=arn)
+    staging_weather_data(cur, conn, [staging_weather_sql])
                             
     # staging_category__sql = staging_category_table_copy.format(s3_bucket=CATEGORY_DATA, arn_role=IAM, json_path=CATEGORY_JSONPATH)
     # staging_category_data(cur, conn, staging_category__sql)
 
     # staging_traveler__sql = staging_category_table_copy.format(s3_bucket=TRAVELER_DATA, arn_role=IAM, json_path=TRAVELER_JSONPATH)
     # staging_traveler_data(cur, conn, staging_traveler__sql)
-    staging_rating_data()
     
 
     # step 3
@@ -147,6 +150,7 @@ def main():
     data_quality_check(cur, conn, select_count_queries)
 
     # close spark session and redshift connection
+    cur.close()
     conn.close()
     spark.stop()
 

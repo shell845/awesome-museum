@@ -50,7 +50,8 @@ def process_museum_data(spark, input_data, output_data):
     # museum_table.show(5)
 
     # write to parquet
-    museum_table.write.partitionBy("City").parquet(output_data)
+    # museum_table.write.partitionBy("City").parquet(output_data) # not able to COPY City column to Redshift if partition by City
+    museum_table.write.parquet(output_data)
 
     print("Process museum data complete")
 
@@ -93,7 +94,8 @@ def process_weather_data(spark, input_data, output_data, country, weather_since)
     # weather_table.show(30)
 
     # write to parquet
-    weather_table.write.partitionBy("City").parquet(output_data)
+    # weather_table.write.partitionBy("City").parquet(output_data) # not able to COPY City column to Redshift if partition by City
+    weather_table.write.parquet(output_data)
 
     print("Process weather data complete")
 

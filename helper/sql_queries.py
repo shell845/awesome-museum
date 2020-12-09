@@ -51,7 +51,7 @@ staging_traveler_table_create = ("""
 staging_weather_table_create = ("""
     CREATE TABLE staging_weather (
         dt date,
-        AverageTemperature numeric,
+        AverageTemperature FLOAT,
         City text,
         Country text
     )
@@ -60,7 +60,7 @@ staging_weather_table_create = ("""
 staging_museum_table_create = ("""
     CREATE TABLE staging_museum (
         MuseumName text,
-        Rating numeric,
+        Rating FLOAT,
         City text,
         Address text
     )
