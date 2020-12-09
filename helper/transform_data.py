@@ -170,10 +170,17 @@ def process_traveler_data(s3_bucket, s3_key, s3_output_key, s3_region, aws_id, a
     
 
     # format raw data
-    temp = [
-        {"museum": key, 'families': int(values[0].replace(",", "")),'couples': int(values[1].replace(",", "")),'solo': int(values[2].replace(",", "")),'business': int(values[3].replace(",", "")),'friends': int(values[4].replace(",", ""))}
-        for key, values in json_content.items()
-    ] 
+    # temp = [
+    #     {"museum": key, 'families': int(values[0].replace(",", "")),'couples': int(values[1].replace(",", "")),'solo': int(values[2].replace(",", "")),'business': int(values[3].replace(",", "")),'friends': int(values[4].replace(",", ""))}
+    #     for key, values in json_content.items()
+    # ] 
+    temp = []
+    for key, values in json_content.items():
+        temp.append({"museum":key, "type":"families", "number":int(values[0].replace(",", ""))})
+        temp.append({"museum":key, "type":"couples", "number":int(values[1].replace(",", ""))})
+        temp.append({"museum":key, "type":"solo", "number":int(values[2].replace(",", ""))})
+        temp.append({"museum":key, "type":"business", "number":int(values[3].replace(",", ""))})
+        temp.append({"museum":key, "type":"friends", "number":int(values[4].replace(",", ""))})
 
     # output formatted data
     output_data = "".join([json.dumps(line) for line in temp])
@@ -190,6 +197,11 @@ def process_traveler_data(s3_bucket, s3_key, s3_output_key, s3_region, aws_id, a
 def staging_parquet_data(cur, conn, queries):
     '''
     copy data from S3 parquet files to Redshift staging table
+
+    Parameters:
+        cur: psycopg2 redshift cursor
+        conn: psycopg2 redshift connection
+        queries: sql query
     '''
     for query in queries:
         cur.execute(query)
@@ -200,6 +212,11 @@ def staging_parquet_data(cur, conn, queries):
 def staging_json_data(cur, conn, queries):
     '''
     copy data from S3 json files to Redshift staging table
+
+    Parameters:
+        cur: psycopg2 redshift cursor
+        conn: psycopg2 redshift connection
+        queries: sql queries
     '''
     for query in queries:
         cur.execute(query)
@@ -207,46 +224,109 @@ def staging_json_data(cur, conn, queries):
     print("Copy json data from S3 to Redshift staging complete")
 
 
-def transform_category(cur, conn, category_table_insert):
-    query = category_table_insert.format("""
-        select distinct s.category
-        from staging_category s
-        group by s.category
-        """)
+def transform_category(cur, conn, query):
+    '''
+    Transform category data to category table
+    
+    Parameters:
+        cur: psycopg2 redshift cursor
+        conn: psycopg2 redshift connection
+        query: sql query
+    '''
+    cur.execute(query)
+    conn.commit()
+    print("Complete category table")
+
 
 def transform_traveler(cur, conn):
+    '''
+    Transform traveler data to traveler table
+    
+    Parameters:
+        cur: psycopg2 redshift cursor
+        conn: psycopg2 redshift connection
+    '''
+
     traveler_type = ["families", "couples", "solo", "business", "friends"]
     query = """
-        insert into traveler (type)
-        values ({})
-    """
+            insert into traveler (type)
+            values ('{}')
+        """
     for t in traveler_type:
         sql_stmt = query.format(t)
         cur.execute(sql_stmt)
         conn.commit()
+
     print("Complete traveler table")
 
 
-def transform_city(cur, conn, city_table_insert):
-    query = city_table_insert.format("""
-        select distinct s.city, 'United States' as country
-        from staging_museum s
-        group by s.city
-        """)
+def transform_city(cur, conn, query, country):
+    '''
+    Transform traveler data to traveler table
+    
+    Parameters:
+        cur: psycopg2 redshift cursor
+        conn: psycopg2 redshift connection
+        query: sql query
+        country: city of which country
+    '''
+
+    query = query.format(country)
     cur.execute(query)
     conn.commit()
+
     print("Complete city table")
-    
+ 
 
 def transform_weather(cur, conn, weather_table_insert, weather_date):
+    '''
+    Transform weather data to weather table
+    
+    Parameters:
+        cur: psycopg2 redshift cursor
+        conn: psycopg2 redshift connection
+        weather_table_insert: sql query
+        weather_date: weather date
+    '''
+
     query = weather_table_insert.format(weather_date)
     cur.execute(query)
     conn.commit()
+
     print("Complete weather table")
     
-    
-def transform_museum(cur, conn, queries):
-    pass
 
-def transform_museum_fact(cur, conn, queries):
-    pass
+def transform_museum(cur, conn, query):
+    '''
+    Transform museum data to museum table
+    
+    Parameters:
+        cur: psycopg2 redshift cursor
+        conn: psycopg2 redshift connection
+        query: sql query
+    '''
+
+    cur.execute(query)
+    conn.commit()
+
+    print("Complete museum table")
+
+
+def transform_museum_fact(cur, conn, query, weather_date):
+    '''
+    Transform museum data to museum table
+    
+    Parameters:
+        cur: psycopg2 redshift cursor
+        conn: psycopg2 redshift connection
+        query: sql query
+        weather_date: weather date
+    '''
+
+    query = query.format(weather_date)
+    cur.execute(query)
+    conn.commit()
+
+    print("Complete museum_fact table")
+
+

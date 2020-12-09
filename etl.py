@@ -143,10 +143,10 @@ def main():
     # step 4
     transform_category(cur, conn, category_table_insert)
     transform_traveler(cur, conn)
-    transform_city(cur, conn, city_table_insert)
+    transform_city(cur, conn, city_table_insert, COUNTRY)
     transform_weather(cur, conn, weather_table_insert, WEATHER_DATE)
-    transform_museum()
-    transform_museum_fact()
+    transform_museum(cur, conn, museum_table_insert)
+    transform_museum_fact(cur, conn, museum_fact_table_insert, WEATHER_DATE)
 
     # step 5
     data_quality_check(cur, conn, select_count_queries)

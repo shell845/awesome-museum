@@ -31,11 +31,8 @@ staging_category_table_create = ("""
 staging_traveler_table_create = ("""
     CREATE TABLE staging_traveler (
         museum text,
-        families integer,
-        couples integer,
-        solo integer,
-        business integer,
-        friends integer
+        type text,
+        number integer
     )
 """)
 
@@ -63,7 +60,7 @@ staging_museum_table_create = ("""
 #
 city_table_create = ("""
     CREATE TABLE "city" (
-        "city_id" IDENTITY(1, 1) PRIMARY KEY,
+        "city_id" INT IDENTITY(1, 1) PRIMARY KEY,
         "city_name" text NOT NULL SORTKEY DISTKEY,
         "country" text NOT NULL
     )
@@ -71,14 +68,14 @@ city_table_create = ("""
 
 category_table_create = ("""
     CREATE TABLE "category" (
-        "category_id" IDENTITY(1, 1) PRIMARY KEY,
+        "category_id" INT IDENTITY(1, 1) PRIMARY KEY,
         "category" text NOT NULL
     )
 """)
 
 traveler_table_create = ("""
     CREATE TABLE "traveler" (
-        "type_id" IDENTITY(1, 1) PRIMARY KEY,
+        "type_id" INT IDENTITY(1, 1) PRIMARY KEY,
         "type" text NOT NULL
     )
 """)
@@ -93,24 +90,26 @@ weather_table_create = ("""
 
 museum_table_create = ("""
     CREATE TABLE "museum" (
-        "museum_id" IDENTITY(1, 1) PRIMARY KEY,
+        "museum_id" INT IDENTITY(1, 1) PRIMARY KEY,
         "museum_name" text NOT NULL SORTKEY,
         "category_id" integer NOT NULL,
         "full_address" text NOT NULL,
         "city_id" integer NOT NULL DISTKEY,
         "rating" FLOAT,
+        "traveler" text
     )
 """)
 
 museum_fact_table_create = ("""
     CREATE TABLE "museum_fact" (
-        "fact_id" IDENTITY(1, 1) PRIMARY KEY,
+        "fact_id" INT IDENTITY(1, 1) PRIMARY KEY,
         "museum_id" integer NOT NULL SORTKEY,
         "category_id" integer NOT NULL,
         "city_id" integer NOT NULL DISTKEY,
         "rating" FLOAT,
         "weather" FLOAT,
-        "traveler_type_id" integer
+        "traveler_type_id" integer,
+        "date" date
     )
 """)
 
@@ -138,45 +137,59 @@ staging_json_copy = ("""
 #
 city_table_insert = ("""
     INSERT INTO city (city_name, country)
-    {}
+    SELECT DISTINCT s.city, '{}' as country
+    FROM staging_museum s
+    GROUP BY s.city
 """)
 
 category_table_insert = ("""
     INSERT INTO category (category)
-    {}
+    SELECT DISTINCT s.category
+    FROM staging_category s
+    GROUP BY s.category
 """)
 
 traveler_table_insert = ("""
-    {}
+    INSERT INTO traveler (type)
+    SELECT DISTINCT type
+    FROM staging_traveler
+    GROUP BY type
 """)
+
 
 weather_table_insert = ("""
     INSERT INTO weather (city_id, weather_date, weather)
-    SELECT c.city_id, w.dt, w.weather
+    SELECT c.city_id, w.dt, w.averageTemperature
     FROM staging_weather w
     JOIN city c
-    ON w.city == c.city
-    WHERE w.dt == {}
+    ON w.city = c.city_name
+    WHERE w.dt = '{}'
 """)
 
 museum_table_insert = ("""
-    INSERT INTO museum (museum_name, category_id, full_address, city_id, rating)
-    SELECT sm.museumname, ca.category_id, sm.address, ci.city_id, sm.rating
+    INSERT INTO museum (museum_name, category_id, full_address, city_id, rating, traveler)
+    SELECT sm.museumname, ca.category_id, sm.address, ci.city_id, sm.rating, t.traveler
     FROM staging_museum sm
     JOIN staging_category sc
     ON sm.museumname = sc.museum
     JOIN category ca
     ON sc.category = ca.category
     JOIN city ci
-    ON sm.city = ci.city
+    ON sm.city = ci.city_name
+    LEFT JOIN (SELECT st.museum, MAX(st.type) AS traveler
+               FROM staging_traveler st
+               GROUP BY st.museum) t
+    ON sm.museumname = t.museum
 """)
 
 museum_fact_table_insert = ("""
-    INSERT INTO museum_fact (museum_id, category_id, city_id, rating, weather, traveler_type_id)
-    SELECT m.museum_id, m.category_id, m.city_id, m.rating, w.weather, 
+    INSERT INTO museum_fact (museum_id, category_id, city_id, rating, traveler_type_id, weather, date)
+    SELECT m.museum_id, m.category_id, m.city_id, m.rating, t.type_id, w.weather, '{}'
     FROM museum m
-    JOIN weather w
+    LEFT JOIN weather w
     ON m.city_id = w.city_id
+    LEFT JOIN traveler t
+    ON m.traveler = t.type
 """)
 
 
