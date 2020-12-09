@@ -28,29 +28,31 @@ Please follow below steps to run this project:
 
 **Step 1: Fill in `aws.cfg`**
 	
-
-	[KEYS]
-	AWS_ACCESS_KEY_ID=<your_access_id>
-	AWS_SECRET_ACCESS_KEY=<your_access_key>
+```
+[KEYS]
+AWS_ACCESS_KEY_ID=<your_access_id>
+AWS_SECRET_ACCESS_KEY=<your_access_key>
 	
-	[CLUSTER]
-	HOST=<your_redshift_host>
-	DB_NAME=<your_redshift_db_name>
-	DB_USER=<your_redshift_db_user>
-	DB_PASSWORD=<your_redshift_db_password>
-	DB_PORT=5439
+[CLUSTER]
+HOST=<your_redshift_host>
+DB_NAME=<your_redshift_db_name>
+DB_USER=<your_redshift_db_user>
+DB_PASSWORD=<your_redshift_db_password>
+DB_PORT=5439
 	
-	[IAM_ROLE]
-	ARN=<your_arn>
+[IAM_ROLE]
+ARN=<your_arn>
 	
-	[FILTER]
-	COUNTRY=United States
-	DATE=2012-10-01
+[FILTER]
+COUNTRY=United States
+DATE=2012-10-01
+```
 
+Notes for [FILTER] section:
 
-- Notes for [FILTER] section
-	- For COUNTRY, we only have dataset for United States at current stage. 
-	- For DATE, we only have dataset up to 2013-09-01, every first day of each month.
+- for COUNTRY, we only have dataset for United States at current stage. 
+- for DATE, we only have dataset up to 2013-09-01, every first day of each month.
+
 
 **Step 2: Remove folder `museum-output` and `weather-output` if they already exist in your S3 directory.**
 
@@ -61,39 +63,40 @@ Note: You may change to use smaller size source dataset in `small_dataset` for t
 ## Source data
 Datasets are collected from Kaggle and Tripadvisor and are uploaded to AWS S3 `s3://udacity-dend-shell845/museum-data/`
 
-1. **museum** overall summary of museums extracted from Tripadvisor. In csv format.
+**museum** overall summary of museums extracted from Tripadvisor. In csv format.
 
-	```
-	mid,Address,Description,FeatureCount,Fee,Langtitude,Latitude,LengthOfVisit,MuseumName,PhoneNum,Rank,Rating,ReviewCount,TotalThingsToDo
+```
+mid,Address,Description,FeatureCount,Fee,Langtitude,Latitude,LengthOfVisit,MuseumName,PhoneNum,Rank,Rating,ReviewCount,TotalThingsToDo
 0,"555 Pennsylvania Ave NW, Washington DC, DC 20001-2114","Find out for yourself why everyone is calling the Newseum the best experience Washington, D.C. has to offer. Each of the seven levels in this magnificent building is packed with interactive exhibits that explore free expression and the five freedoms of the First Amendment: religion, speech, press, assembly and petition. Whether you have just a few hours or want to spend all day, you'll find something for everyone in the family in the Newseum's 15 theaters and 15 galleries.",3,Yes ,-77.0192351,38.8931385,2-3 hours ,Newseum,+1 888-639-7386,8,4.5,"6,309",398
-	```
+```
 	
-2. **category** categories of museums, e.g. art museum, history museum, science museum etc. In json format.
+**category** categories of museums, e.g. art museum, history museum, science museum etc. In json format.
 	
-	```
-	{'museum': ['museum type 1','museum type 2', …]}
-	{"Gettysburg Heritage Center": ["History Museums", "Museums"]}
-	```
+```
+{'museum': ['museum type 1','museum type 2', …]}
+{"Gettysburg Heritage Center": ["History Museums", "Museums"]}
+```
 
-3. **rating** how many ratings did the museums receive and what are the ratings. In json format.
+**rating** how many ratings did the museums receive and what are the ratings. In json format.
 	
-	```
-	{'museum': ['Excellent','Very good','Average','Poor','Terrible']}
-	{"Gettysburg Heritage Center": ["164", "63", "10", "5", "4"]}
-	```
+```
+{'museum': ['Excellent','Very good','Average','Poor','Terrible']}
+{"Gettysburg Heritage Center": ["164", "63", "10", "5", "4"]}
+```
 	
-4. **traveler** how the travers travel. In json format.
+**traveler** how the travers travel. In json format.
 	
-	```
-	{'museum': ['Families','Couples','Solo','Business','Friends']}
-	{"Gettysburg Heritage Center": ["88", "86", "17", "2", "33"]}
-	```
-5. **weather** average tempature of the cities where the museums are located. In csv format.
-6. 
-	```
-	dt,AverageTemperature,AverageTemperatureUncertainty,City,Country,Latitude,Longitude
-	2008-01-01,10.915999999999999,0.165,Pasadena,United States,29.74N,96.00W
-	```
+```
+{'museum': ['Families','Couples','Solo','Business','Friends']}
+{"Gettysburg Heritage Center": ["88", "86", "17", "2", "33"]}
+```
+
+**weather** average tempature of the cities where the museums are located. In csv format.
+
+```
+dt,AverageTemperature,AverageTemperatureUncertainty,City,Country,Latitude,Longitude
+2008-01-01,10.915999999999999,0.165,Pasadena,United States,29.74N,96.00W
+```
 
 ## Data model
 ### Staging table
