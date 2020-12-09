@@ -43,17 +43,19 @@ CATEGORY_BUCKET = config['S3']['CATEGORY_BUCKET']
 CATEGORY_KEY = config['S3']['CATEGORY_KEY']
 CATEGORY_OUTPUT_KEY = config['S3']['CATEGORY_OUTPUT_KEY']
 CATEGORY_DATA = config['S3']['CATEGORY_DATA']             # json file
+CATEGORY_DATA_S3 = config['S3']['CATEGORY_DATA_S3']
 
 TRAVELER_BUCKET = config['S3']['TRAVELER_BUCKET'] 
 TRAVELER_KEY = config['S3']['TRAVELER_KEY']
 TRAVELER_OUTPUT_KEY = config['S3']['TRAVELER_OUTPUT_KEY']
 TRAVELER_DATA = config['S3']['TRAVELER_DATA']             # json file
+TRAVELER_DATA_S3 = config['S3']['TRAVELER_DATA_S3']
 
 S3_REGION = config['S3']['REGION']
 
 # Country and weather date
 COUNTRY = config['FILTER']['COUNTRY']
-WEATHER_SINCE = config['FILTER']['DATE']
+WEATHER_DATE = config['FILTER']['DATE']
 
 
 def create_spark_session():
@@ -107,7 +109,7 @@ def main():
 
     process_museum_data(spark, MUSEUM_DATA_RAW, MUSEUM_DATA)
 
-    process_weather_data(spark, WEATHER_DATA_RAW, WEATHER_DATA)
+    process_weather_data(spark, WEATHER_DATA_RAW, WEATHER_DATA, COUNTRY, WEATHER_DATE)
 
     process_category_data(CATEGORY_BUCKET, CATEGORY_KEY, CATEGORY_OUTPUT_KEY, S3_REGION, os.environ['AWS_ACCESS_KEY_ID'], os.environ['AWS_SECRET_ACCESS_KEY'])
 
@@ -122,27 +124,27 @@ def main():
 
     arn = "'" + IAM + "'"
 
-    staging_museum_sql = staging_museum_table_copy.format(s3_bucket=MUSEUM_DATA_S3, arn_role=arn)
-    staging_museum_data(cur, conn, [staging_museum_sql])
+    staging_museum_sql = staging_parquet_copy.format(table_name='staging_museum', s3_bucket=MUSEUM_DATA_S3, arn_role=arn)
+    staging_parquet_data(cur, conn, [staging_museum_sql])
 
-    staging_weather_sql = staging_weather_table_copy.format(s3_bucket=WEATHER_DATA_S3, arn_role=arn)
-    staging_weather_data(cur, conn, [staging_weather_sql])
-                            
-    # staging_category__sql = staging_category_table_copy.format(s3_bucket=CATEGORY_DATA, arn_role=IAM, json_path=CATEGORY_JSONPATH)
-    # staging_category_data(cur, conn, staging_category__sql)
+    staging_weather_sql = staging_parquet_copy.format(table_name='staging_weather', s3_bucket=WEATHER_DATA_S3, arn_role=arn)
+    staging_parquet_data(cur, conn, [staging_weather_sql])
+    
+    staging_category_sql = staging_json_copy.format(table_name='staging_category', s3_bucket=CATEGORY_DATA_S3, arn_role=arn)
+    staging_json_data(cur, conn, [staging_category_sql])   
 
-    # staging_traveler__sql = staging_category_table_copy.format(s3_bucket=TRAVELER_DATA, arn_role=IAM, json_path=TRAVELER_JSONPATH)
-    # staging_traveler_data(cur, conn, staging_traveler__sql)
+    staging_traveler_sql = staging_json_copy.format(table_name='staging_traveler', s3_bucket=TRAVELER_DATA_S3, arn_role=arn)
+    staging_json_data(cur, conn, [staging_traveler_sql])                   
     
 
     # step 3
     data_quality_check(cur, conn, select_count_staging_queries)
 
     # step 4
-    transform_category()
-    transform_traveler()
-    transform_rating()
-    transform_weather()
+    transform_category(cur, conn, category_table_insert)
+    transform_traveler(cur, conn)
+    transform_city(cur, conn, city_table_insert)
+    transform_weather(cur, conn, weather_table_insert, WEATHER_DATE)
     transform_museum()
     transform_museum_fact()
 

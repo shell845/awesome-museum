@@ -56,7 +56,7 @@ def process_museum_data(spark, input_data, output_data):
     print("Process museum data complete")
 
 
-def process_weather_data(spark, input_data, output_data, country, weather_since):
+def process_weather_data(spark, input_data, output_data, country, weather_date):
     """
         This function extract weather data files (csv) from S3,
         transform to weather table, 
@@ -67,7 +67,7 @@ def process_weather_data(spark, input_data, output_data, country, weather_since)
             input_data: S3 path of input data files
             output_data: S3 path of output parquet files
             country: weather of which country
-            weather_since: weather since which date
+            weather_date: weather since which date
     """
     
     print("Process weather data start...")
@@ -84,7 +84,7 @@ def process_weather_data(spark, input_data, output_data, country, weather_since)
     ])
 
     df = spark.read.format("csv").option("header", True).schema(weatherSchema).load(weather_data)
-    df = df.filter(F.col('Country') == country).filter(F.col('dt') >= weather_since)
+    df = df.filter(F.col('Country') == country).filter(F.col('dt') >= weather_date)
     
     weather_fields = ["dt", "AverageTemperature", "City", "Country"]
     weather_table = df.select(weather_fields).dropDuplicates()
@@ -167,12 +167,13 @@ def process_traveler_data(s3_bucket, s3_key, s3_output_key, s3_region, aws_id, a
     input_object = s3.Object(s3_bucket, s3_key)
     file_content = input_object.get()['Body'].read().decode('utf-8')
     json_content = json.loads(file_content)
+    
 
     # format raw data
     temp = [
-    {"museum": key, "Families": values[0], "Couples": values[1], "Solo": values[2],"Business": values[3],"Friends": values[4]}
-    for key, values in json_content.items()
-    ]
+        {"museum": key, 'families': int(values[0].replace(",", "")),'couples': int(values[1].replace(",", "")),'solo': int(values[2].replace(",", "")),'business': int(values[3].replace(",", "")),'friends': int(values[4].replace(",", ""))}
+        for key, values in json_content.items()
+    ] 
 
     # output formatted data
     output_data = "".join([json.dumps(line) for line in temp])
@@ -186,47 +187,64 @@ def process_traveler_data(s3_bucket, s3_key, s3_output_key, s3_region, aws_id, a
     print("Process traveler data complete")
 
 
-def staging_museum_data(cur, conn, queries):
+def staging_parquet_data(cur, conn, queries):
     '''
     copy data from S3 parquet files to Redshift staging table
     '''
     for query in queries:
         cur.execute(query)
         conn.commit()
-    print("Copy data from S3 to staging_museum complete")
+    print("Copy parquet data from S3 to Redshift staging complete")
 
 
-def staging_weather_data(cur, conn, queries):
+def staging_json_data(cur, conn, queries):
     '''
-    copy data from S3 parquet files to Redshift staging table
+    copy data from S3 json files to Redshift staging table
     '''
     for query in queries:
         cur.execute(query)
         conn.commit()
-    print("Copy data from S3 to staging_weather complete")
+    print("Copy json data from S3 to Redshift staging complete")
 
 
-def staging_category_data(cur, conn, queries):
-    pass
+def transform_category(cur, conn, category_table_insert):
+    query = category_table_insert.format("""
+        select distinct s.category
+        from staging_category s
+        group by s.category
+        """)
 
-def staging_traveler_data(cur, conn, queries):
-    pass
+def transform_traveler(cur, conn):
+    traveler_type = ["families", "couples", "solo", "business", "friends"]
+    query = """
+        insert into traveler (type)
+        values ({})
+    """
+    for t in traveler_type:
+        sql_stmt = query.format(t)
+        cur.execute(sql_stmt)
+        conn.commit()
+    print("Complete traveler table")
 
-def staging_rating_data(cur, conn, queries):
-    pass
 
-def transform_category(cur, conn, queries):
-    pass
+def transform_city(cur, conn, city_table_insert):
+    query = city_table_insert.format("""
+        select distinct s.city, 'United States' as country
+        from staging_museum s
+        group by s.city
+        """)
+    cur.execute(query)
+    conn.commit()
+    print("Complete city table")
+    
 
-def transform_traveler(cur, conn, queries):
-    pass
-
-def transform_rating(cur, conn, queries):
-    pass
-
-def transform_weather(cur, conn, queries):
-    pass
-
+def transform_weather(cur, conn, weather_table_insert, weather_date):
+    query = weather_table_insert.format(weather_date)
+    cur.execute(query)
+    conn.commit()
+    print("Complete weather table")
+    
+    
 def transform_museum(cur, conn, queries):
     pass
 
