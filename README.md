@@ -1,16 +1,16 @@
 ## Project summary
-This project collects and presents information about museums (US only at current stage, will extend to global in next pharse), including museum categories, locations, ratings and more. 
+This project collects and presents information about museums (US only at current stage, will extend to global in next phase), including museum categories, locations, ratings and more. 
 
-Output can be used by travelers, museum fans and travel companies for trip planning, as well can be used by museum marketing department and data analysts for study and analyse.
+Output can be used by travellers, museum fans and travel companies for trip planning, as well can be used by museum marketing department and data analysts for study and analyse.
 
 ## Project structure
-This reposity contains following materials:
+This repository contains following materials:
 
 1. **`aws.cfg`** contains all configuration parameters. Please input following parameters before executing the ETL pipeline.
 
-2. **`helper`** foler contains following helper functions:
+2. **`helper`** folder contains following helper functions:
 
-	- `create_drop_tables.py` drop and creat redshift tables
+	- `create_drop_tables.py` drop and create redshift tables
 	- `data_quality.py` data quality check
 	- `sql_queries.py` all sql queries used in this project
 	- `transform_data.py` functions to process data and transform table
@@ -95,7 +95,7 @@ mid,Address,Description,FeatureCount,Fee,Langtitude,Latitude,LengthOfVisit,Museu
 	```
     
     
-5. **weather** average tempature of the cities where the museums are located. In csv format.
+5. **weather** average temperature of the cities where the museums are located. In csv format.
 
    ```
 	dt,AverageTemperature,AverageTemperatureUncertainty,City,Country,Latitude,Longitude
@@ -138,7 +138,7 @@ Please refer to below metadata of all tables as data dictionary:
 |------------|-----------|--------------------------------------|------------------------------|-|-|
 | museum     | text      | museum name                          | National Museum of Arts      |N|traveler data file|
 | type       | text      | traveler type                        | Business                     |N|traveler data file|
-| number     | integer   | number of travelers                  | 283                          |N|traveler data file|
+| number     | integer   | number of travellers                  | 283                          |N|traveler data file|
 
 `staging_weather` load data from **weather**
 
@@ -221,14 +221,14 @@ The ETL pipeline includes following steps:
 	- Clean **museum** and **weather** raw data with Spark, output transformed data to S3 as parquet files.
 	- Clean and re-format **category** and **traveler** dataset, output re-formatted data to S3 as json files.
 2. Load cleaned and well-formatted dataset from S3 to Redshift staging tables.
-3. Conduct data quality check to ensure data are loaded succesfully to Redshift.
+3. Conduct data quality check to ensure data are loaded successfully to Redshift.
 4. Transform staging tables to fact and dimension tables in Redshift.
 5. Perform data quality check to ensure data transformation is correct.
 
 ![ETL Pipeline](elt-diagram.png)
 
 ## Data quality check
-Three types of data quality checks are performed in this porject:
+Three types of data quality checks are performed in this project:
 1. Check record counts of each data to ensure data are properly processed.
 2. Select and display sample data to further exam the data quality.
 3. Check if any null values in tables.
@@ -236,13 +236,13 @@ Three types of data quality checks are performed in this porject:
 ## Tools and technologies
 S3, Spark and Redshift are use in this project.
 
-**S3** provids object-based storage which make it suitable to be the data lake of this project, because there are several types of dataset files being used and generated in this project, including json files, csv files and parquet files. In addition, storing datasets in S3 make them easier to be shared among Spark and Redshift.
+**S3** provides object-based storage which make it suitable to be the data lake of this project, because there are several types of dataset files being used and generated in this project, including json files, csv files and parquet files. In addition, storing datasets in S3 make them easier to be shared among Spark and Redshift.
 
 **Spark** is ideal to process mass data. Our raw datasets are big, for example there are millions rows of records in the weather raw data file. It will be time consuming if we use Redshift to clean, format and process those big files directly with Redshift. So we use Spark to pre-process the raw datasets, do data cleaning and data wrangling, and write results as parquet files back to S3 for Redshift's further processing.
 
-**Redshift** is used as data warehouse for this project, all staging tables, fact table and dimension tables are host in Redshift. It enables us to pull data from mutiple sources (in our case, the multiple sources means multiple data files stored in S3) and transform as well as analyse. Also, Redshift is horizontally scalable, which means we can still easier handle our data when our data volumn increases x100+.
+**Redshift** is used as data warehouse for this project, all staging tables, fact table and dimension tables are host in Redshift. It enables us to pull data from multiple sources (in our case, the multiple sources means multiple data files stored in S3) and transform as well as analyse. Also, Redshift is horizontally scalable, which means we can still easier handle our data when our data volume increases x100+.
 
-Will further adopt Airflow for pipeline management in next pharse.
+Will further adopt Airflow for pipeline management in next phase.
 
 ## Usage
 Museum lovers can make reference to the project dataset for their trip plannings.
@@ -251,7 +251,7 @@ Travel agencies can make use of this project for travel recommendations as well.
 
 Data analysts from travel industry can use this project output to predict if a museum will be popular with market, and study what factors make a museum popular.
 
-Museum staff can get intuitve feedback on how visitors view their museum.
+Museum staff can get intuitive feedback on how visitors view their museum.
 
 
 ## Other scenarios
@@ -267,14 +267,14 @@ Museum staff can get intuitve feedback on how visitors view their museum.
 
 3. If the database needed to be accessed by 100+ people.
 
-	If those people only need to view the project result, then they should not access the database directly. Instead the result will be visualized by visualization tool e.g Tableau, Power BI etc. Only the visualization tool access database, people only check results from the tool.
+	If those people only need to view the project result, then they should not access the database directly. Instead the result will be visualised by visualization tool e.g Tableau, Power BI etc. Only the visualization tool access database, people only check results from the tool.
 	
 	If those people need read write to the database, an IAM group will be assigned to them.
 
 
 ## Next phase
 1. Adopt Airflow for pipeline management.
-2. Visualize the data.
+2. Visualise the data.
 2. Extend the dataset to including reviewer comments, study the relationship between rating and different key words in the comments.
 
  

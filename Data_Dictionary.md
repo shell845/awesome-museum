@@ -36,7 +36,7 @@ mid,Address,Description,FeatureCount,Fee,Langtitude,Latitude,LengthOfVisit,Museu
 	```
     
     
-5. **weather** average tempature of the cities where the museums are located. In csv format.
+5. **weather** average temperature of the cities where the museums are located. In csv format.
 
    ```
 	dt,AverageTemperature,AverageTemperatureUncertainty,City,Country,Latitude,Longitude
@@ -44,7 +44,7 @@ mid,Address,Description,FeatureCount,Fee,Langtitude,Latitude,LengthOfVisit,Museu
 	```
 
 
-## Staing, fact and dimension tables
+## Staging, fact and dimension tables
 
 This project has following tables:
 
@@ -75,7 +75,7 @@ Please refer to below metadata of all tables as data dictionary:
 |------------|-----------|--------------------------------------|------------------------------|-|-|
 | museum     | text      | museum name                          | National Museum of Arts      |N|traveler data file|
 | type       | text      | traveler type                        | Business                     |N|traveler data file|
-| number     | integer   | number of travelers                  | 283                          |N|traveler data file|
+| number     | integer   | number of travellers                  | 283                          |N|traveler data file|
 
 `staging_weather` load data from **weather**
 
