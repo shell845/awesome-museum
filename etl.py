@@ -104,7 +104,7 @@ def main():
 
     print("awesome-museum ETL executing...")
 
-    # step 1
+    # step 1 - data cleaning and wrangling with Spark
     spark = create_spark_session()
 
     process_museum_data(spark, MUSEUM_DATA_RAW, MUSEUM_DATA)
@@ -116,7 +116,7 @@ def main():
     process_traveler_data(TRAVELER_BUCKET, TRAVELER_KEY, TRAVELER_OUTPUT_KEY, S3_REGION, os.environ['AWS_ACCESS_KEY_ID'], os.environ['AWS_SECRET_ACCESS_KEY'])
 
 
-    # step 2
+    # step 2 - data staging with Redshift
     conn, cur = create_redshift_connection()
 
     drop_tables(conn, cur, drop_table_queries)
@@ -137,10 +137,11 @@ def main():
     staging_json_data(cur, conn, [staging_traveler_sql])                   
     
 
-    # step 3
-    data_quality_check(cur, conn, select_count_staging_queries)
+    # step 3 - data quality with staging tables
+    data_number_check(cur, conn, select_count_staging_queries)
+    data_quality_check(cur, conn, check_staging_data_queries)
 
-    # step 4
+    # step 4 - data transformation with Redshift
     transform_category(cur, conn, category_table_insert)
     transform_traveler(cur, conn)
     transform_city(cur, conn, city_table_insert, COUNTRY)
@@ -148,8 +149,10 @@ def main():
     transform_museum(cur, conn, museum_table_insert)
     transform_museum_fact(cur, conn, museum_fact_table_insert, WEATHER_DATE)
 
-    # step 5
-    data_quality_check(cur, conn, select_count_queries)
+    # step 5 - data quality with fact and dimension tables
+    data_number_check(cur, conn, select_count_queries)
+    data_quality_check(cur, conn, check_data_queries)
+    data_quality_check_null(cur, conn, check_null)
 
     # close spark session and redshift connection
     cur.close()

@@ -176,9 +176,13 @@ museum_table_insert = ("""
     ON sc.category = ca.category
     JOIN city ci
     ON sm.city = ci.city_name
-    LEFT JOIN (SELECT st.museum, MAX(st.type) AS traveler
+    LEFT JOIN (SELECT st.museum, st.type AS traveler
                FROM staging_traveler st
-               GROUP BY st.museum) t
+               INNER JOIN (SELECT t.museum, MAX(t.number) AS max
+                           FROM staging_traveler t
+                           GROUP BY t.museum) temp
+               ON st.museum = temp.museum
+               AND st.number = temp.max) t
     ON sm.museumname = t.museum
 """)
 
@@ -241,11 +245,77 @@ get_number_museum_fact_table = ("""
 """)
 
 #
+# SAMPLE CHECK DATA IN STAGING TABLE
+#
+check_data_staging_category = ("""
+    SELECT * FROM staging_category LIMIT 5
+""")
+
+check_data_staging_traveler = ("""
+    SELECT * FROM staging_traveler LIMIT 5
+""")
+
+check_data_staging_weather = ("""
+    SELECT * FROM staging_weather LIMIT 5
+""")
+
+check_data_staging_museum = ("""
+    SELECT * FROM staging_museum LIMIT 5
+""")
+
+
+#
+# SAMPLE CHECK DATA IN FACT AND DIMENSION TABLE
+#
+check_data_city_table = ("""
+    SELECT * FROM city LIMIT 5
+""")
+
+check_data_category_table = ("""
+    SELECT * FROM category LIMIT 5
+""")
+
+check_data_traveler_table = ("""
+    SELECT * FROM traveler  LIMIT 5
+""")
+
+check_data_weather_table = ("""
+    SELECT * FROM weather  LIMIT 5
+""")
+
+check_data_museum_table = ("""
+    SELECT * FROM museum  LIMIT 5
+""")
+
+check_data_museum_fact_table = ("""
+    SELECT * FROM museum_fact  LIMIT 5
+""")
+
+#
+# CHECK IF ANY NULL VALUE IN FACT TABLE
+#
+check_null =("""
+        select *
+        from museum_fact
+        where museum_id is null 
+        or category_id is null 
+        or city_id is null 
+        or rating is null 
+        or weather is null 
+        or traveler_type_id is null
+        or date is null
+""") 
+
+#
 # QUERY LISTS
 #
 create_table_queries = [staging_category_table_create, staging_traveler_table_create, staging_weather_table_create, staging_museum_table_create, city_table_create, category_table_create, traveler_table_create, weather_table_create, museum_table_create, museum_fact_table_create]
 drop_table_queries = [staging_category_table_drop, staging_traveler_table_drop, staging_weather_table_drop, staging_museum_table_drop, city_table_drop, category_table_drop, traveler_table_drop, weather_table_drop, museum_table_drop, museum_fact_table_drop]
-# copy_table_queries = [staging_weather_table_copy, staging_museum_table_copy, staging_category_table_copy, staging_traveler_table_copy]
+
 insert_table_queries = [city_table_insert, category_table_insert, traveler_table_insert, weather_table_insert, museum_table_insert, museum_fact_table_insert]
 select_count_staging_queries= [get_number_staging_category_table, get_number_staging_traveler_table, get_number_staging_weather_table, get_number_staging_museum_table]
 select_count_queries= [get_number_city_table, get_number_category_table, get_number_traveler_table, get_number_weather_table, get_number_museum_table, get_number_museum_fact_table]
+
+check_staging_data_queries= [check_data_staging_category, check_data_staging_traveler, check_data_staging_weather, check_data_staging_museum]
+check_data_queries= [check_data_city_table, check_data_category_table, check_data_traveler_table, check_data_weather_table, check_data_museum_table, check_data_museum_fact_table]
+
