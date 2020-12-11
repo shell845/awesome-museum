@@ -73,7 +73,7 @@ Please refer to the [Data Dictionary](Data_Dictionary.md) file for detail.
 
 ## Data model
 
-![DB Diagram](db-diagram.png)
+![DB Diagram](DB-diagram.png)
 
 ## Data Dictionary
 

@@ -152,4 +152,4 @@ Please refer to below metadata of all tables as data dictionary:
 
 ## DB diagram
 
-![DB Diagram](db-diagram.png)
+![DB Diagram](DB-diagram.png)
